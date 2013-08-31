@@ -24,6 +24,7 @@
 #include <ioctl.h>
 #include <linux/err.h>
 #include <linux/mtd/mtd.h>
+#include <linux/math64.h>
 
 LIST_HEAD(cdev_list);
 
@@ -197,11 +198,10 @@ static int partition_ioctl(struct cdev *cdev, int request, void *buf)
 	case MEMGETREGIONINFO:
 		if (cdev->mtd) {
 			struct region_info_user *reg = buf;
-			int erasesize_shift = ffs(cdev->mtd->erasesize) - 1;
 
 			reg->offset = cdev->offset;
 			reg->erasesize = cdev->mtd->erasesize;
-			reg->numblocks = cdev->size >> erasesize_shift;
+			reg->numblocks = div_u64(cdev->size, cdev->mtd->erasesize);
 			reg->regionindex = cdev->mtd->index;
 		}
 	break;

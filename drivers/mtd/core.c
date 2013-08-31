@@ -25,6 +25,7 @@
 #include <ioctl.h>
 #include <nand.h>
 #include <errno.h>
+#include <linux/math64.h>
 
 #include "mtd.h"
 
@@ -82,9 +83,6 @@ static ssize_t mtd_op_read(struct cdev *cdev, void* buf, size_t count,
 	return retlen;
 }
 
-#define NOTALIGNED(x) (x & (mtd->writesize - 1)) != 0
-#define MTDPGALG(x) ((x) & ~(mtd->writesize - 1))
-
 #ifdef CONFIG_MTD_WRITE
 static ssize_t mtd_op_write(struct cdev* cdev, const void *buf, size_t _count,
 			  loff_t _offset, ulong flags)
@@ -112,15 +110,22 @@ static struct mtd_erase_region_info *mtd_find_erase_region(struct mtd_info *mtd,
 	return NULL;
 }
 
+#define ALIGNED_OFFSET(offset, bs) ((bs & (bs-1)) == 0) ? \
+									offset & ~(bs-1) : \
+									bs * div_u64(offset,bs)
+#define ALIGNED_COUNT(count, bs) ((bs & (bs-1)) == 0) ? \
+									ALIGN(count,bs) : \
+									bs * div_u64(count+(bs-1),bs)
+
 static int mtd_erase_align(struct mtd_info *mtd, size_t *count, loff_t *offset)
 {
 	struct mtd_erase_region_info *e;
 	loff_t ofs;
 
 	if (mtd->numeraseregions == 0) {
-		ofs = *offset & ~(mtd->erasesize - 1);
+		ofs = ALIGNED_OFFSET(*offset, mtd->erasesize);
 		*count += (*offset - ofs);
-		*count = ALIGN(*count, mtd->erasesize);
+		*count = ALIGNED_COUNT(*count, mtd->erasesize);
 		*offset = ofs;
 		return 0;
 	}
@@ -129,14 +134,14 @@ static int mtd_erase_align(struct mtd_info *mtd, size_t *count, loff_t *offset)
 	if (!e)
 		return -EINVAL;
 
-	ofs = *offset & ~(e->erasesize - 1);
+	ofs = ALIGNED_OFFSET(*offset, mtd->erasesize);
 	*count += (*offset - ofs);
 
 	e = mtd_find_erase_region(mtd, *offset + *count);
 	if (!e)
 		return -EINVAL;
 
-	*count = ALIGN(*count, e->erasesize);
+	*count = ALIGNED_COUNT(*count, e->erasesize);
 	*offset = ofs;
 
 	return 0;
