@@ -1,0 +1,55 @@
+#!/bin/sh
+
+pre_wait=2
+post_wait=3
+polarity=1
+
+dfu_config="/dev/dataflash0.bootstrap(bootstrap)sr,/dev/dataflash0.bareboxenv(bareboxenv)sr,/dev/dataflash0.barebox(barebox)sr,/dev/dataflash0.kernel(kernel)sr,/dev/nand0.root.bb(root)r"
+
+echo
+
+if [ $at91_udc0.vbus != 1 ]; then
+	echo "No USB Device cable plugged, normal boot"
+	exit
+fi
+
+splash=/env/usb.png
+if [ -f ${splash} -a -e /dev/fb0 ]; then
+	splash -y 20 -x 280 ${splash} 
+	fb0.enable=1
+fi
+
+timeout -s -a ${pre_wait} 
+
+gpio_get_value ${dfu_button}
+if [ $? = ${polarity} ]; then
+	echo "dfu_button detected wait ${post_wait}s"
+	timeout -s -a ${post_wait}
+
+	if [ $at91_udc0.vbus != 1 ]; then
+		echo "No USB Device cable plugged, normal boot"
+		exit
+	fi
+
+	gpio_get_value ${dfu_button}
+	if [ $? = ${polarity} ]; then
+		echo "Start DFU Mode"
+		splash=/env/dfu.png
+		if [ -f ${splash} -a -e /dev/fb0 ]; then
+			splash -o -b 0 ${splash}
+		fi
+		# mount mtd for dfu writing...
+		mtdparts="256M(nand0.root)"
+		mtdparts-add -b -d nand0 -p ${mtdparts}
+
+		#Use NetChip's donated numbers
+		dfu ${dfu_config} -P 0xFFFF -V 0x0525 -m "CPO Science" -p "DataCollector (DFU mode)"
+		#if the dfu works.. we want to reboot
+		reset
+		#exit
+	fi
+fi
+
+global.autoboot_timeout=16
+echo "enable tty over USB Device, waiting ${global.autoboot_timeout}s"
+usbserial

@@ -1,0 +1,10 @@
+#!/bin/sh
+# reset it if it needs it
+msp430 -r
+# wait a moment for it to recover
+msleep 500
+
+msp430 -i -M msp_fw_major -m msp_fw_minor -S msp_serial -T msp_boardtype
+
+msp430 -b on
+

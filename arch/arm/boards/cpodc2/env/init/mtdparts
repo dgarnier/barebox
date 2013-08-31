@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ "$1" = menu ]; then
+	init-menu-add-entry "$0" "MTD Partitions"
+	exit
+fi
+
+mtdparts="0x4200(dataflash0.bootstrap),0x4200(dataflash0.bareboxenv),0x39C00(dataflash0.barebox),0x1BE000(dataflash0.kernel)"
+mtdparts-add -d dataflash0 -p ${mtdparts}
+
+# mtdparts broken for - partitions
+mtdparts="256M(nand0.root)"
+kernelname="atmel_nand"
+# we don't really need this unless doing dfu...
+#mtdparts-add -b -d nand0 -p ${mtdparts} -k ${kernelname}
+
+mtdparts="-(nand0.root)"
+global linux.mtdparts.nand0
+global.linux.mtdparts.nand0="${kernelname}:${mtdparts}"

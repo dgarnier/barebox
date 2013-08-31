@@ -271,6 +271,11 @@ config MACH_AT91SAM9261EK
 	  Select this if you are using Atmel's AT91SAM9261-EK Evaluation Kit.
 	  <http://www.atmel.com/dyn/products/tools_card.asp?tool_id=3820>
 
+config MACH_CPODC2_9261
+    bool "CPO Science DataCollector II v2.0"
+    select MACH_CPODC2
+    select HAVE_NAND_ATMEL_BUSWIDTH_16
+
 config MACH_PM9261
 	bool "Ronetix PM9261"
 	select HAS_DM9000
@@ -297,7 +302,22 @@ config MACH_AT91SAM9G10EK
 	  Select this if you are using Atmel's AT91SAM9G10-EK Evaluation Kit.
 	  <http://www.atmel.com/dyn/products/tools_card.asp?tool_id=4588>
 
+config MACH_CPODC2_9G10
+    bool "CPO Science DataCollector II v2.1"
+    select HAVE_NAND_ATMEL_BUSWIDTH_16
+    select MACH_CPODC2
+
 endchoice
+
+endif
+
+# ----------------------------------------------------------
+
+if SOC_AT91SAM9261
+
+config MACH_CPODC2
+    bool
+    depends on MACH_CPODC2_9261 || MACH_CPODC2_9G10
 
 endif
 
@@ -524,6 +544,10 @@ config CALAO_MOB_TNY_MD2
 config CALAO_MB_QIL_A9260
 	bool "MB-QIL A9260 Motherboard Board support"
 	depends on MACH_QIL_A9260 || MACH_QIL_A9G20
+
+config CPODC2_MSP430
+	bool "CPODC2 MSP430 controller support"
+	depends on MACH_CPODC2
 
 if COMMAND_SUPPORT
 
