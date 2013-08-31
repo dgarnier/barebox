@@ -1,0 +1,6 @@
+#!/bin/sh
+
+global.hostname=cpodc2
+global.user=cpodc2
+global.autoboot_timeout=1
+global.boot.default=dataflash

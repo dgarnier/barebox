@@ -92,6 +92,7 @@ board-$(CONFIG_MACH_AT91SAM9M10G45EK)		+= at91sam9m10g45ek
 board-$(CONFIG_MACH_AT91SAM9M10IHD)		+= at91sam9m10ihd
 board-$(CONFIG_MACH_AT91SAM9N12EK)		+= at91sam9n12ek
 board-$(CONFIG_MACH_AT91SAM9X5EK)		+= at91sam9x5ek
+board-$(CONFIG_MACH_CPODC2)			+= cpodc2
 board-$(CONFIG_MACH_DSS11)			+= dss11
 board-$(CONFIG_MACH_GE863)			+= telit-evk-pro3
 board-$(CONFIG_MACH_MINI2440)			+= friendlyarm-mini2440

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ "$1" = menu ]; then
+	boot-menu-add-entry "$0" "dataflash"
+	exit
+fi
+
+global.bootm.image="/dev/dataflash0.kernel"
+#global.bootm.oftree="/env/oftree"
+global.linux.bootargs.dyn.root="root=ubi0:rootfs ubi.mtd=nand0.root rootfstype=ubifs"
