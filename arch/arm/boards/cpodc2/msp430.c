@@ -154,9 +154,7 @@ static int msp_getline(struct msp430_device *msp,
 			i = -ETIMEDOUT;
 			break;
 		}
-		//debug("about to fill\n");
 		if (input_fifo_fill(msp->cdev, msp->fifo)) {
-			//debug("got %d chars\n", kfifo_len(msp->fifo));
 			kfifo_getc(msp->fifo, &c);
 			buf[i++] = c;
 			if (c == '\n' || c == '\r') {
@@ -246,7 +244,7 @@ static int unwrap_response(char *buff, char *resp)
 	/* search for beginning of packet */
 	while(*b != 0) {
 		if (*b == '$') {
-			debug("> $");
+			pr_debug("> $");
 			if (++b == bend) b=buff;
 			break;
 		}
@@ -262,15 +260,15 @@ static int unwrap_response(char *buff, char *resp)
 		} else if (*b == '*') {
 			complete=1;
 			if (++b == bend) b = buff; /* circular buffer */
-			debug("*\n");
+			pr_debug("*\n");
 			break;
 		} else {
-			debug("\n unexpected char %c\n ", *b);
+			pr_debug("\n unexpected char %c\n ", *b);
 			if (++b == bend) b = buff; // skip it
 			break;
 		}
 		if (u == rend) {
-			debug("Unwrap would overrun!\n");
+			pr_debug("Unwrap would overrun!\n");
 			break;
 		}
 		i=i<<4;
@@ -286,11 +284,11 @@ static int unwrap_response(char *buff, char *resp)
 			} else b--;
 			break;
 		} else {
-			debug("unexpected char %c", *b);
+			pr_debug("unexpected char %c", *b);
 			if (++b == bend) b = buff; // skip it
 			break;
 		}
-		debug("%02X",i);
+		pr_debug("%02X",i);
 		*u++ = i;
 
 		if (++b == bend) b = buff; /* circular buffer */
@@ -309,40 +307,40 @@ static int msp_wait_parse_response(struct msp430_device *msp)
 
 	len = msp_getline(msp, line, INPUT_FIFO_SIZE, TIMEOUT_RESPONSE);
 	if (len == 0) {
-		debug(" 0 length line.\n");
+		pr_debug(" 0 length line.\n");
 		return -1;
 	}
 	if (len < 0)
 		return len;
 
-	debug("Got a response:\n< %s\n",line);
+	pr_debug("Got a response:\n< %s\n",line);
 
 	if (unwrap_response(line, (char *) &rsp)) {
 		// got a response...
 		switch (rsp.rsp) {
 		case kRspStatus:
-			debug("got MSP status packet.\n");
+			pr_debug("got MSP status packet.\n");
 			break;
 		case kRspDevice:
-			debug("got device response.\n");
+			pr_debug("got device response.\n");
 			msp->major= rd->fwVersionMajor;
 			msp->minor= rd->fwVersionMinor;
 			msp->boardtype = rd->boardType;
 			break;
 		case kRspBacklight:
-			debug("got backlight response.\n");
+			pr_debug("got backlight response.\n");
 			msp->bl_current = bl->backlight.settings.current;
 			msp->bl_on		= bl->backlight.settings.on;
 			break;
 		case kRspSerialNumber:
-			debug("got serial number response.\n");
+			pr_debug("got serial number response.\n");
 			strlcpy(msp->fullSN, ((struct sRspSerialNumber *)&rsp)->fullSN, FULLSNLENGTH);
 			break;
 		default:
-			debug("unexpected msp response (0x%02x)\n", rsp.rsp);
+			pr_warning("unexpected msp response (0x%02x)\n", rsp.rsp);
 		}
 	} else {
-		debug("Couldn't parse: %s\n", line);
+		pr_err("Couldn't parse: %s\n", line);
 		return -1;
 	}
 
@@ -360,14 +358,13 @@ static int msp430_read_device(struct msp430_device *msp)
 		do {
 			rsp = msp_wait_parse_response(msp);
 			if (rsp == kRspDevice) {
-				debug("got device bt = %02x, fw = %02d.%02d\n", msp->boardtype, msp->major, msp->minor);
+				pr_debug("got device bt = %02x, fw = %02d.%02d\n", msp->boardtype, msp->major, msp->minor);
 				return 0;
 			}
 		} while (rsp != -ETIMEDOUT);
 
 		// timed out.. perhaps needs a "flush"
 		msp_flush(msp);
-
 	}
 	return rsp;
 }
@@ -383,7 +380,7 @@ static int msp430_read_serial(struct msp430_device *msp)
 		do {
 			rsp = msp_wait_parse_response(msp);
 			if (rsp == kRspSerialNumber) {
-				debug("got the serial number %s\n",msp->fullSN);
+				pr_debug("got the serial number %s\n",msp->fullSN);
 				return 0;
 			}
 		} while (rsp != -ETIMEDOUT);
@@ -413,11 +410,11 @@ static int msp430_reset(struct msp430_device *msp)
 	if (kfifo_len(msp->fifo)) {
 		unsigned char c;
 		int i;
-		printf("%d characters in buffer after reset: ", kfifo_len(msp->fifo));
+		pr_debug("%d characters in buffer after reset: ", kfifo_len(msp->fifo));
 		i = 40;
 		while ( (kfifo_getc(msp->fifo, &c)==0) && (i--) )
-			printf("%c",c);
-		printf("\n");
+			pr_debug("%c",c);
+		pr_debug("\n");
 	}
 #endif
 	msp_flush(msp);
@@ -473,7 +470,7 @@ static int do_msp430(int argc, char *argv[])
 			setenv(optarg,g_msp->fullSN);
 			break;
 		default:
-			debug("unexpected option 0x%02x (%c)\n", opt,opt);
+			pr_err("unexpected option 0x%02x (%c)\n", opt,opt);
 			return -EINVAL;
 		}
 
