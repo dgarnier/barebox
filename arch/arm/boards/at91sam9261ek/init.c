@@ -223,6 +223,8 @@ static void ek_add_device_lcdc(void)
 
 	if (machine_is_at91sam9g10ek())
 		ek_lcdc_data.lcd_wiring_mode = ATMEL_LCDC_WIRING_RGB;
+	else
+		ek_lcdc_data.has_intensity_bit = true;
 
 	at91_add_device_lcdc(&ek_lcdc_data);
 }

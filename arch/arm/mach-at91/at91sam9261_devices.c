@@ -218,8 +218,6 @@ void __init at91_add_device_lcdc(struct atmel_lcdfb_platform_data *data)
 {
 	BUG_ON(!data);
 
-	data->have_intensity_bit = true;
-
 #if defined(CONFIG_FB_ATMEL_STN)
 	at91_set_A_periph(AT91_PIN_PB0, 0);	/* LCDVSYNC */
 	at91_set_A_periph(AT91_PIN_PB1, 0);	/* LCDHSYNC */
